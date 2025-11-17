@@ -1,0 +1,28 @@
+# Ignore all instances of db_connect.php everywhere
+db_connect.php
+**/db_connect.php
+
+# Composer vendor directory (if using Composer)
+vendor/
+
+# Logs
+*.log
+
+# Cache / temp files
+tmp/
+cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+
+# Environment files
+.env
+.env.*
+
+# Misc. files
+set_adminiii.php

@@ -1,0 +1,8 @@
+# Prevent directory listing
+Options -Indexes
+
+# Deny direct access to uploads folder via URL
+<FilesMatch "^.*$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
