@@ -55,11 +55,7 @@ function isActive($file) {
                   <i class="bi bi-book me-2 text-primary"></i> Upload Courses
                 </a>
               </li>
-              <li>
-                <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#uploadModal" href="#">
-                  <i class="bi bi-file-earmark-arrow-up me-2 text-primary"></i> Upload Form A
-                </a>
-              </li>
+              
             </ul>
           </li>
         <?php endif; ?>
@@ -79,6 +75,9 @@ function isActive($file) {
                 <i class="bi bi-book-half me-2 text-primary"></i> View Courses</a>
               </li>
             </ul>
+            <li><a class="dropdown-item" href="/esrms/activity/manage_users.php">
+                <i class="bi bi-people-fill me-2 text-primary"></i> Manage Users</a>
+              </li>
           </li>
         <?php endif; ?>
 

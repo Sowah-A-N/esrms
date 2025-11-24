@@ -26,3 +26,5 @@ Thumbs.db
 
 # Misc. files
 set_adminiii.php
+uploads/files
+results/files

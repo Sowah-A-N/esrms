@@ -2,7 +2,7 @@
 include('../includes/auth_guard.php');
 include('../config/db_connect.php');
 
-// Restrict access
+// Restrict access to HOD only
 if ($_SESSION['role'] !== 'hod') {
     http_response_code(403);
     die('Unauthorized access.');
@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $hod_id = intval($_SESSION['user_id']);
     $ip = $_SERVER['REMOTE_ADDR'];
 
-    // --- Validate File Upload ---
+    // Validate File
     if (!isset($_FILES['result_file']) || $_FILES['result_file']['error'] !== UPLOAD_ERR_OK) {
         $_SESSION['error'] = "Invalid or missing file upload.";
         header("Location: ./view_results.php?replace=error");
@@ -40,27 +40,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // --- Prepare upload directory ---
-    $safe_name = preg_replace('/[^A-Za-z0-9_\.\-]/', '_', $file_name);
-    $unique_name = time() . "_" . $safe_name;
+    // -- Generate Safe Filename (uses same rules as upload handler) --
+    $safe_course_code = preg_replace('/[^A-Za-z0-9_-]/', '', $course_code);
+    $safe_semester = preg_replace('/[^A-Za-z0-9_-]/', '', $semester);
+    $safe_session = preg_replace('/[^A-Za-z0-9_-]/', '', str_replace('/', '-', $session));
 
-    // Upload directory relative to THIS script: /uploads/files/
-    $target_dir = __DIR__ . "/files/";
-    if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
+    $new_filename = "{$safe_course_code}_{$safe_semester}_{$safe_session}_v" . time() . "." . strtolower($file_type);
 
-    $target_file = $target_dir . $unique_name;
+    // -------------------------------------------------------------
+    // ✔ MATCH ORIGINAL UPLOAD LOCATION
+    // uploads/files/
+    // -------------------------------------------------------------
+    $target_dir = realpath(__DIR__ . "/../uploads/files/");
 
-    // IMPORTANT: DB must store path relative to /uploads/
-    $file_path_db = 'files/' . $unique_name;
+    if (!$target_dir) {
+        mkdir(__DIR__ . "/../uploads/files/", 0777, true);
+        $target_dir = realpath(__DIR__ . "/../uploads/files/");
+    }
 
-    // --- Move uploaded file ---
+    $target_file = $target_dir . "/" . $new_filename;
+
+    // DB path must match original handler ("uploads/files/...")
+    $file_path_db = "uploads/files/" . $new_filename;
+
+    // Move uploaded file
     if (!move_uploaded_file($file['tmp_name'], $target_file)) {
         $_SESSION['error'] = "Error saving uploaded file.";
         header("Location: ./view_results.php?replace=error");
         exit();
     }
 
-    // --- Get Original Record ---
+    // Fetch Original
     $result = mysqli_query($conn, "SELECT * FROM uploads WHERE upload_id = $original_id LIMIT 1");
     if (!$result || mysqli_num_rows($result) === 0) {
         $_SESSION['error'] = "Original upload not found.";
@@ -70,11 +80,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $original = mysqli_fetch_assoc($result);
 
-    // Determine parent + version
+    // Determine versioning
     $parent_id = $original['parent_upload_id'] ?: $original['upload_id'];
     $new_version = intval($original['version']) + 1;
 
-    // Archive original
+    // Archive old file
     mysqli_query($conn, "UPDATE uploads SET is_archived = 1 WHERE upload_id = $original_id");
 
     // Insert new version
@@ -84,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              file_name, file_path, file_type, uploaded_by, parent_upload_id, version)
         VALUES (
             '$course_code', '$course_title', '$lecturer', '$dept', '$semester', '$session',
-            '$file_name', '$file_path_db', '$file_type', $hod_id, $parent_id, $new_version
+            '$new_filename', '$file_path_db', '$file_type', $hod_id, $parent_id, $new_version
         )
     ";
 
@@ -92,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $new_id = mysqli_insert_id($conn);
 
-        // Optional replacement logs table
+        // Optional: record replacement history
         $has_replacements_table = mysqli_query($conn, "SHOW TABLES LIKE 'upload_replacements'");
         if ($has_replacements_table && mysqli_num_rows($has_replacements_table) > 0) {
             mysqli_query(
@@ -102,12 +112,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
         }
 
-        // Activity Log
-        $desc = sprintf(
-            "Replaced upload ID %d with new version %d (new upload ID %d)",
-            $original_id, $new_version, $new_id
-        );
-
+        // Activity log
+        $desc = "Replaced upload ID $original_id with version $new_version (new ID $new_id)";
         mysqli_query($conn, "
             INSERT INTO activity_log (user_id, action_type, upload_id, ip_address, description)
             VALUES ($hod_id, 'REPLACE', $new_id, '$ip', '$desc')
@@ -118,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    // DB error
+    // DB Error
     error_log("SQL Error: " . mysqli_error($conn));
     $_SESSION['error'] = "Database error: could not save replacement.";
     header("Location: ./view_results.php?replace=error");

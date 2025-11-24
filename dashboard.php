@@ -24,60 +24,7 @@ include('config/db_connect.php');
   print_r($_SESSION);
 ?>
 
-<!-- <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom py-3">
-  <div class="container-fluid">
-
-    <!-- Sidebar toggle for mobile -->
-    <button class="btn btn-outline-secondary d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar">
-      <i class="bi bi-list"></i>
-    </button>
-
-    <!-- Brand -->
-    <a class="navbar-brand fw-semibold text-uppercase" href="/esrms/index.php">ESRMS</a>
-
-    <!-- Toggler for collapsing navbar -->
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <!-- Navbar content -->
-    <div class="collapse navbar-collapse" id="navbarContent">
-      <ul class="navbar-nav ms-auto align-items-center gap-2">
-        <li class="nav-item">
-          <a class="nav-link text-uppercase small fw-medium" href="/esrms/index.php">Dashboard</a>
-        </li>
-        <?php if($_SESSION['role'] == "secretary"): ?>
-            <li class="nav-item">
-            <a class="nav-link text-uppercase small fw-medium" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                Upload Form A
-            </a>
-            </li>
-        <?php endif; ?>
-
-        <li class="nav-item">
-          <a class="nav-link text-uppercase small fw-medium" href="/esrms/results/view_results.php">View Results</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link text-uppercase small fw-medium" href="/esrms/activity/logs.php">Activity Logs</a>
-        </li>
-        <li class="nav-item">
-          <span class="nav-link text-muted small">
-            Welcome, <strong><?php echo $_SESSION['username'] ?? 'User'; ?></strong>
-          </span>
-        </li>
-        <li class="nav-item">
-          <a href="/esrms/auth/logout.php" class="btn btn-outline-danger btn-sm">
-            <i class="bi bi-box-arrow-right"></i> Logout
-          </a>
-        </li>
-      </ul>
-    </div>
-
-  </div>
-</nav> -->
-
 <?php include './includes/navbar.php' ?>
-
 
 <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="sidebar">
   <div class="offcanvas-header">
@@ -222,9 +169,26 @@ include('config/db_connect.php');
               </select>
             </div>
             <div class="col-md-6">
-              <label for="academic_year" class="form-label">Academic Year</label>
-              <input type="text" class="form-control" name="academic_year" id="academic_year" placeholder="2024/2025" required>
+                <label for="academic_year" class="form-label">Academic Year</label>
+                <select class="form-select" name="academic_year" id="academic_year" required>
+                    <option value="">Select Academic Year</option>
+
+                    <?php
+                        $currentYear = date("Y");
+                        $startYear = $currentYear - 3;
+                        $endYear = $currentYear + 3;
+
+                        $currentAcademic = $currentYear . "/" . ($currentYear + 1);
+
+                        for ($year = $startYear; $year <= $endYear; $year++) {
+                            $value = $year . "/" . ($year + 1);
+                            $selected = ($value === $currentAcademic) ? "selected" : "";
+                            echo "<option value=\"$value\" $selected>$value</option>";
+                        }
+                    ?>
+                </select>
             </div>
+
             <div class="col-md-12">
               <label for="lecturer_name" class="form-label">Lecturer Name</label>
               <!-- <input type="text" class="form-control" name="lecturer_name" id="lecturer_name" required> -->

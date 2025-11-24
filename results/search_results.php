@@ -8,43 +8,63 @@ $filters = [];
 $params = [];
 $types = '';
 
+// Dynamic filters
 if (!empty($_GET['course_code'])) {
-    $filters[] = "course_code = ?";
+    $filters[] = "u.course_code = ?";
     $params[] = trim($_GET['course_code']);
     $types .= 's';
 }
 
 if (!empty($_GET['course_title'])) {
-    $filters[] = "course_title LIKE ?";
+    $filters[] = "u.course_title LIKE ?";
     $params[] = '%' . trim($_GET['course_title']) . '%';
     $types .= 's';
 }
 
 if (!empty($_GET['lecturer_name'])) {
-    $filters[] = "lecturer_name LIKE ?";
+    $filters[] = "u.lecturer_name LIKE ?";
     $params[] = '%' . trim($_GET['lecturer_name']) . '%';
     $types .= 's';
 }
 
 if (!empty($_GET['semester'])) {
-    $filters[] = "semester = ?";
+    $filters[] = "u.semester = ?";
     $params[] = trim($_GET['semester']);
     $types .= 's';
 }
 
 if (!empty($_GET['session'])) {
-    $filters[] = "session LIKE ?";
+    $filters[] = "u.session LIKE ?";
     $params[] = '%' . trim($_GET['session']) . '%';
     $types .= 's';
 }
 
 // Always exclude archived files
-$filters[] = "is_archived = 0";
+$filters[] = "u.is_archived = 0";
 
-$sql = "SELECT * FROM uploads";
+// Base query with JOINs
+$sql = "
+    SELECT 
+        u.*,
+        r.replaced_by,
+        r.replaced_at,
+        usr.full_name AS uploaded_by_name
+    FROM uploads u
+    LEFT JOIN upload_replacements r 
+        ON r.new_upload_id = u.upload_id
+    LEFT JOIN users usr 
+        ON usr.user_id = r.replaced_by
+";
+
+// Add filters
 if (!empty($filters)) {
     $sql .= " WHERE " . implode(" AND ", $filters);
 }
+
+// echo "<pre>";
+// echo $sql;
+// echo "</pre>";
+// die();
 
 // If no filter other than is_archived, optionally block full table return:
 if (count($filters) === 1) {
@@ -89,12 +109,16 @@ if ($result && mysqli_num_rows($result) > 0) {
                 <td>{$row['semester']}</td>
                 <td>{$row['session']}</td>
                 <td>
-                    <a class='btn btn-sm btn-success' href='download_file.php?id={$row['upload_id']}'>
+                    <a class='btn btn-sm btn-success' href='download.php?id={$row['upload_id']}'>
                       <i class='bi bi-download'></i> Download
                     </a>
                 </td>";
 
         if ($_SESSION['role'] === 'hod') {
+
+            // print_r($row);
+            // die();
+
             echo "<td>
                     <button class='btn btn-sm btn-warning' 
                         data-bs-toggle='modal' 
@@ -106,8 +130,8 @@ if ($result && mysqli_num_rows($result) > 0) {
                         data-semester='" . htmlspecialchars($row['semester']) . "'
                         data-session='" . htmlspecialchars($row['session']) . "'
                         data-version='" . htmlspecialchars($row['version']) . "'
-                        data-modified='" . htmlspecialchars($row['last_modified']) . "'
-                        data-uploaded-by='" . htmlspecialchars($row['uploaded_by_name'] ?? 'Unknown') . "'>
+                        data-modified='" . htmlspecialchars(date('l, d-m-Y', strtotime($row['last_modified']))) . "'
+                        data-uploaded-by='" . htmlspecialchars($row['uploaded_by_name'] ?? 'No amendments made') . "'>
                         <i class='bi bi-pencil-square'></i> Amend
                     </button>
                 </td>";

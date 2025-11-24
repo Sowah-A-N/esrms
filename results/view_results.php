@@ -210,12 +210,11 @@ include('../config/db_connect.php');
 
     </div>
 
-    <!-- Replace Upload Modal -->
 <!-- Replace Upload Modal -->
 <div class="modal fade" id="replaceModal" tabindex="-1" aria-labelledby="replaceModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <form id="replaceForm" method="POST" enctype="multipart/form-data" action="replace_upload.php">
+      <form id="replaceForm" method="POST" enctype="multipart/form-data" action="replace_upload2.php">
         <div class="modal-header bg-warning bg-opacity-25 border-bottom-0">
           <h5 class="modal-title fw-bold text-warning-emphasis" id="replaceModalLabel">
             <i class="bi bi-arrow-repeat me-2"></i> Replace Upload
@@ -235,7 +234,7 @@ include('../config/db_connect.php');
               <div>
                 <strong>Current File Information</strong>
                 <div class="mt-1">
-                  <div>📘 <strong>Version:</strong> <span id="current_version">1</span></div>
+                  <div>📘 <strong>Amendment:</strong> <span id="current_version">1</span></div>
                   <div>🗓️ <strong>Last Modified:</strong> <span id="current_modified">2025-10-29 14:33</span></div>
                   <div>👤 <strong>Uploaded By:</strong> <span id="current_uploaded_by">John Doe</span></div>
                 </div>
@@ -322,7 +321,7 @@ include('../config/db_connect.php');
     // Populate version info
     document.getElementById('current_version').textContent = button.getAttribute('data-version') || '1';
     document.getElementById('current_modified').textContent = button.getAttribute('data-modified') || '—';
-    document.getElementById('current_uploaded_by').textContent = button.getAttribute('data-uploaded-by') || 'Unknown';
+    document.getElementById('current_uploaded_by').textContent = button.getAttribute('data-uploaded-by') || 'No amendments made';
   });
 </script>
 
